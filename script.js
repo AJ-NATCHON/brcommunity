@@ -75,8 +75,12 @@ document.getElementById('enroll-form').onsubmit = async (e) => {
         const result = await res.json();
 
         if (result.status === "success") {
-            alert("✅ ลงทะเบียนสำเร็จ!");
-            location.reload();
+            document.getElementById('enroll-form').style.display = 'none';
+            document.getElementById('registration-section').innerHTML += `
+                <div style="text-align:center; padding:30px;">
+                    <h2 style="color:green;">✅ ลงทะเบียนสำเร็จ!</h2>
+                    <p>ชุมนุม: <strong>${formData.club}</strong></p>
+                </div>`;
         } else if (result.status === "full") {
             alert("❌ ชุมนุมนี้เต็มแล้ว กรุณาเลือกชุมนุมอื่น");
             btn.disabled = false;
@@ -85,7 +89,6 @@ document.getElementById('enroll-form').onsubmit = async (e) => {
             alert("⚠️ คุณลงทะเบียนชุมนุมไปแล้ว ไม่สามารถลงซ้ำได้");
             btn.disabled = false;
             btn.innerText = "ยืนยันการลงทะเบียน";
-        // 👇 เพิ่มตรงนี้เลยครับ
         } else if (result.status === "closed") {
             alert("❌ " + result.message);
             btn.disabled = false;

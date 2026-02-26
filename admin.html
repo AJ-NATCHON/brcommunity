@@ -18,9 +18,10 @@
     </div>
 
     <div id="admin-content" class="container" style="display:none; max-width: 1200px;">
-        <header>
+        <header style="position:relative;">
             <h1>แผงจัดการข้อมูลลงทะเบียน</h1>
             <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชาชูปถัมภ์</p>
+            <button onclick="logout()" style="position:absolute; top:10px; right:0; padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
         </header>
 
         <div class="card admin-controls">
@@ -59,14 +60,16 @@
                 <table id="registrationTable">
                     <thead>
                         <tr>
-                            <th>ว/ด/ป เวลา</th>
-                            <th>เลขประจำตัว</th>
-                            <th>เลขที่</th>
-                            <th>ห้อง</th>
-                            <th>ชื่อ-นามสกุล</th>
-                            <th>ชุมนุม</th>
-                            <th>จัดการ</th>
-                        </tr>
+    <th>ว/ด/ป</th>
+    <th>เวลา</th>
+    <th>อีเมล</th>
+    <th>เลขประจำตัว</th>
+    <th>เลขที่</th>
+    <th>ห้อง</th>
+    <th>ชื่อ-นามสกุล</th>
+    <th>ชุมนุม</th>
+    <th>จัดการ</th>
+</tr>
                     </thead>
                     <tbody id="adminTableBody"></tbody>
                 </table>
@@ -75,7 +78,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCV4is4j-F2o52T-HlPzrH-9Smn2jJ1YjUJlZybGxL2c4XwebD8pPD0CnT4hkZbCyK/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDg5yXdOGIfgk9KN3oCncp-mzIk7yPllvbKRHPYRS2-cs2aa0hhk2Ifzgb7TrLPOiQHA/exec";
         let allData = [];
 
         // 1. ระบบเช็ครหัสผ่าน
@@ -94,7 +97,7 @@
         // 2. ดึงข้อมูลจาก Google Sheets
         async function loadData() {
             const tbody = document.getElementById('adminTableBody');
-            tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='9'>กำลังโหลดข้อมูล...</td></tr>";
             try {
                 const response = await fetch(SCRIPT_URL + "?action=read");
                 allData = await response.json();
@@ -112,14 +115,16 @@
             data.slice(1).forEach((row) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td class="club-cell">${row[5]}</td>
-                    <td><button class="btn-del" onclick="deleteData('${row[1]}')">ลบ</button></td>
-                `;
+    <td>${row[0]}</td>
+    <td>${row[1]}</td>
+    <td>${row[2]}</td>
+    <td>${row[3]}</td>
+    <td>${row[4]}</td>
+    <td>${row[5]}</td>
+    <td>${row[6]}</td>
+    <td class="club-cell">${row[7]}</td>
+    <td><button class="btn-del" onclick="deleteData('${row[3]}')">ลบ</button></td>
+`;
                 tbody.appendChild(tr);
             });
         }
@@ -141,7 +146,7 @@
             } else {
                 filtered = allData.filter((row, index) => {
                     if (index === 0) return true;
-                    const grade = parseInt(String(row[3]).split('/')[0]);
+                    const grade = parseInt(String(row[5]).split('/')[0]);
                     return level === 'junior' ? grade <= 3 : grade >= 4;
                 });
             }
@@ -150,19 +155,21 @@
 
         // 6. Export เป็น Excel
         function exportExcel() {
-            const exportData = allData.slice(1).map(row => ({
-                "ว/ด/ป เวลา":   row[0],
-                "เลขประจำตัว":  String(row[1]).replace("'", ""),
-                "เลขที่":        row[2],
-                "ห้อง":         String(row[3]).replace("'", ""),
-                "ชื่อ-นามสกุล": row[4],
-                "ชุมนุม":        row[5]
-            }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
-            XLSX.writeFile(wb, "รายงานการลงทะเบียนชุมนุม_2569.xlsx");
-        }
+    const exportData = allData.slice(1).map(row => ({
+        "ว/ด/ป":         row[0],
+        "เวลา":          row[1],
+        "อีเมล":         row[2],
+        "เลขประจำตัว":  String(row[3]).replace("'", ""),
+        "เลขที่":        row[4],
+        "ห้อง":         String(row[5]).replace("'", ""),
+        "ชื่อ-นามสกุล": row[6],
+        "ชุมนุม":        row[7]
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
+    XLSX.writeFile(wb, "รายงานการลงทะเบียนชุมนุม_2569.xlsx");
+}
 
         // 7. โหลดเวลาเปิด-ปิด
         async function loadTime() {
@@ -191,21 +198,28 @@
 
         // 9. ฟังก์ชันลบข้อมูล
         async function deleteData(studentId) {
-    if (confirm(`ยืนยันการลบข้อมูลเลขประจำตัว ${studentId}?`)) {
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=delete&studentId=${encodeURIComponent(studentId)}`);
-            const result = await res.json();
-            if (result.status === "success") {
-                alert("✅ ลบข้อมูลสำเร็จ");
-                loadData(); // โหลดตารางใหม่
-            } else {
-                alert("❌ ไม่พบข้อมูลนักเรียน");
+            if (confirm(`ยืนยันการลบข้อมูลเลขประจำตัว ${studentId}?`)) {
+                try {
+                    const res = await fetch(`${SCRIPT_URL}?action=delete&studentId=${encodeURIComponent(studentId)}`);
+                    const result = await res.json();
+                    if (result.status === "success") {
+                        alert("✅ ลบข้อมูลสำเร็จ");
+                        loadData();
+                    } else {
+                        alert("❌ ไม่พบข้อมูลนักเรียน");
+                    }
+                } catch (err) {
+                    alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+                }
             }
-        } catch (err) {
-            alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
         }
-    }
-}
+
+        // 10. ออกจากระบบ
+        function logout() {
+            document.getElementById('admin-content').style.display = 'none';
+            document.getElementById('admin-login').style.display = 'flex';
+            document.getElementById('admin-password').value = '';
+        }
     </script>
 
     <style>

@@ -10,8 +10,8 @@
     <div class="container">
         <header>
             <h1>ระบบลงทะเบียนชุมนุม ปีการศึกษา 2569</h1>
-            <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชาชูปถัมภ์</p>
-        </header>
+            <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชูปถัมภ์</p>
+            </header>
 
         <section id="login-section" class="card">
             <h2>เข้าสู่ระบบนักเรียน</h2>
@@ -20,15 +20,21 @@
                 <input type="password" id="login-id" placeholder="เลขประจำตัวนักเรียน" required>
                 <button onclick="handleLogin()" class="btn-main">เข้าสู่ระบบ</button>
             </div>
+            <div style="text-align:center; margin-top:15px;">
+                <a href="admin.html" style="display:inline-block; padding:8px 16px; background:#6c757d; color:white; border-radius:5px; text-decoration:none; font-size:14px;">🔧 ผู้ดูแลระบบ</a>
+            </div>
         </section>
 
         <section id="registration-section" class="card" style="display:none;">
+            <div style="text-align:right; margin-bottom:10px;">
+                <button onclick="logoutStudent()" style="padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
+            </div>
             <div class="level-selector">
                 <button id="btn-junior" onclick="selectLevel('junior')" class="btn-level">มัธยมศึกษาตอนต้น</button>
                 <button id="btn-senior" onclick="selectLevel('senior')" class="btn-level">มัธยมศึกษาตอนปลาย</button>
             </div>
 
-            <form id="enroll-form" style="display:none;">
+            <form id="enroll-form" style="display:none;" onsubmit="handleSubmit(event)">
                 <div class="form-grid">
                     <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
                     <input type="text" id="studentId" placeholder="เลขประจำตัว" readonly>
@@ -43,6 +49,7 @@
             </form>
         </section>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCV4is4j-F2o52T-HlPzrH-9Smn2jJ1YjUJlZybGxL2c4XwebD8pPD0CnT4hkZbCyK/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDg5yXdOGIfgk9KN3oCncp-mzIk7yPllvbKRHPYRS2-cs2aa0hhk2Ifzgb7TrLPOiQHA/exec";
 
 const clubsJunior = [
     "คณิตศาสตร์เจ้าปัญหา (ครูลลิต/ครูมัญชุสร)", "The Power of Math (ครูกฤติยา)", "เกมคณิตฯ(อุปกรณ์) (ครูศาศวัต/ครูจันทร์จิรา)", "Math Art (ครูทฤฒมน)", "ชุมนุมสวดโอ้เอ้วิหารราย ม.ต้น (ครูยุวดี)", "ชุมนุมหนังสือทำมือ ม.ต้น (ครูภควรรษ)", "English Literature (ครูหทัยภัทร)", "Crossword ม.ต้น (ครูคณิน)", "Enjoy with You(tube) (ครูมินิมล)", "Chinese Music ม.ต้น (ครูจิรพร)", "Free style by science (ครูธนวิน)", "บอร์ดเกม/ROV (ครูวาณี)", "e-sport (ครูณัชชนม์/ครูศุภารัตน์)", "ชุมนุมส่งเสริมประชาธิปไตย ม.ต้น (ครูอาชวิน)", "ชมรมเปตอง (ครูธนภูมิ/ครูภัทรรัตน์)", "ชุมนุมเสน่ห์ปลายจวัก (ครูสลิลดา)", "ชุมนุมการ์ตูนแฟนด้อม (ครูจิตตราภรณ์/ครูธันยวีร์)", "ชุมนุมอัพเวลธรรม (ครูคุณานนท์)", "ฟังพอดแคสต์ (Podcast) (ครูโสรยา)", "Photography as Art (ครูวิวัฒน์)", "ชุมนุมโลกศิลปะหลากมิติ (ครูกฤษฎา)", "เฮฮา ภาษาดนตรี (ครูรุ่งโรจน์)", "นาฏศิลป์ ม.ต้น (ครูเอกชัย)", "กีฬาสากล ม.ต้น (ครูพิฑูร)", "ชุมนุมกีฬาบริดจ์ (ครูผดุงศักดิ์)", "ว่ายน้ำ (ครูวารินทร์)"
@@ -51,7 +51,7 @@ function selectLevel(level) {
     document.getElementById(`btn-${level}`).classList.add('active');
 }
 
-document.getElementById('enroll-form').onsubmit = async (e) => {
+async function handleSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
@@ -64,7 +64,7 @@ document.getElementById('enroll-form').onsubmit = async (e) => {
         classroom: document.getElementById('classroom').value,
         no: document.getElementById('no').value,
         club: document.getElementById('club').value
-    };
+    }
 
     try {
         // ✅ ลบ mode: 'no-cors' ออก และใช้ cors แทน
@@ -104,3 +104,37 @@ document.getElementById('enroll-form').onsubmit = async (e) => {
         btn.innerText = "ยืนยันการลงทะเบียน";
     }
 };
+function logoutStudent() {
+    // รีเซ็ต registration-section กลับเป็นของเดิม
+    document.getElementById('registration-section').innerHTML = `
+        <div style="text-align:right; margin-bottom:10px;">
+            <button onclick="logoutStudent()" style="padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
+        </div>
+        <div class="level-selector">
+            <button id="btn-junior" onclick="selectLevel('junior')" class="btn-level">มัธยมศึกษาตอนต้น</button>
+            <button id="btn-senior" onclick="selectLevel('senior')" class="btn-level">มัธยมศึกษาตอนปลาย</button>
+        </div>
+        <form id="enroll-form" style="display:none;">
+            <div class="form-grid">
+                <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
+                <input type="text" id="studentId" placeholder="เลขประจำตัว" readonly>
+                <input type="email" id="email" placeholder="อีเมล" readonly>
+                <select id="classroom" required></select>
+                <input type="number" id="no" placeholder="เลขที่" required>
+                <select id="club" required>
+                    <option value="">-- กรุณาเลือกชุมนุม --</option>
+                </select>
+            </div>
+            <button type="submit" id="submit-btn" class="btn-main">ยืนยันการลงทะเบียน</button>
+        </form>
+    `;
+
+    // ผูก event submit ใหม่
+    document.getElementById('enroll-form').onsubmit = handleSubmit;
+
+    // ซ่อน registration และแสดง login
+    document.getElementById('registration-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-id').value = '';
+}

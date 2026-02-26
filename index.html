@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบลงทะเบียนชุมนุม 2569 | เบญจมราชาลัย</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ระบบลงทะเบียนชุมนุม ปีการศึกษา 2569</h1>
+            <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชาชูปถัมภ์</p>
+        </header>
+
+        <section id="login-section" class="card">
+            <h2>เข้าสู่ระบบนักเรียน</h2>
+            <div class="input-group">
+                <input type="email" id="login-email" placeholder="อีเมล (@br.ac.th)" required>
+                <input type="password" id="login-id" placeholder="เลขประจำตัวนักเรียน" required>
+                <button onclick="handleLogin()" class="btn-main">เข้าสู่ระบบ</button>
+            </div>
+        </section>
+
+        <section id="registration-section" class="card" style="display:none;">
+            <div class="level-selector">
+                <button id="btn-junior" onclick="selectLevel('junior')" class="btn-level">มัธยมศึกษาตอนต้น</button>
+                <button id="btn-senior" onclick="selectLevel('senior')" class="btn-level">มัธยมศึกษาตอนปลาย</button>
+            </div>
+
+            <form id="enroll-form" style="display:none;">
+                <div class="form-grid">
+                    <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
+                    <input type="text" id="studentId" placeholder="เลขประจำตัว" readonly>
+                    <input type="email" id="email" placeholder="อีเมล" readonly>
+                    <select id="classroom" required></select>
+                    <input type="number" id="no" placeholder="เลขที่" required>
+                    <select id="club" required>
+                        <option value="">-- กรุณาเลือกชุมนุม --</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-btn" class="btn-main">ยืนยันการลงทะเบียน</button>
+            </form>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | เบญจมราชาลัย</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="admin-page">
+
+    <div id="admin-login" class="overlay">
+        <div class="card login-card">
+            <h2>ผู้ดูแลระบบ (Admin)</h2>
+            <input type="password" id="admin-password" placeholder="กรุณาใส่รหัสผ่าน">
+            <button onclick="checkAdminLogin()" class="btn-main">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <div id="admin-content" class="container" style="display:none; max-width: 1200px;">
+        <header>
+            <h1>แผงจัดการข้อมูลลงทะเบียน</h1>
+            <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชาชูปถัมภ์</p>
+        </header>
+
+        <div class="card admin-controls">
+        <!-- ✅ ส่วนตั้งเวลาเปิด-ปิด แยก ม.ต้น / ม.ปลาย -->
+<div class="card" style="margin-bottom:15px; padding:15px;">
+    <h3 style="margin:0 0 10px 0;">⏰ กำหนดเวลาเปิด-ปิดการสมัคร</h3>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+            <strong style="width:80px;">ม.ต้น</strong>
+            <label>เปิด: <input type="datetime-local" id="juniorOpen"></label>
+            <label>ปิด: <input type="datetime-local" id="juniorClose"></label>
+        </div>
+        <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+            <strong style="width:80px;">ม.ปลาย</strong>
+            <label>เปิด: <input type="datetime-local" id="seniorOpen"></label>
+            <label>ปิด: <input type="datetime-local" id="seniorClose"></label>
+        </div>
+        <div>
+            <button onclick="saveTime()" class="btn-main" style="padding:8px 20px;">บันทึก</button>
+            <span id="timeStatus" style="color:green; margin-left:10px;"></span>
+        </div>
+    </div>
+</div>
+            <div class="toolbar">
+                <div class="filter-btns">
+                    <button onclick="filterByLevel('all')" class="btn-sub active">ทั้งหมด</button>
+                    <button onclick="filterByLevel('junior')" class="btn-sub">ม.ต้น</button>
+                    <button onclick="filterByLevel('senior')" class="btn-sub">ม.ปลาย</button>
+                </div>
+                <input type="text" id="adminSearch" onkeyup="searchTable()" placeholder="ค้นหา ชื่อ / เลขประจำตัว / ชุมนุม...">
+                <button onclick="exportExcel()" class="btn-export">Export to Excel</button>
+            </div>
+            
+            <div class="table-wrapper">
+                <table id="registrationTable">
+                    <thead>
+                        <tr>
+                            <th>ว/ด/ป เวลา</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>เลขประจำตัว</th>
+                            <th>ห้อง</th>
+                            <th>เลขที่</th>
+                            <th>ชุมนุม</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCV4is4j-F2o52T-HlPzrH-9Smn2jJ1YjUJlZybGxL2c4XwebD8pPD0CnT4hkZbCyK/exec";
+        let allData = [];
+
+        // 1. ระบบเช็ครหัสผ่าน 12345
+       function checkAdminLogin() {
+    const pass = document.getElementById('admin-password').value;
+    if (pass === "12345") {
+        document.getElementById('admin-login').style.display = 'none';
+        document.getElementById('admin-content').style.display = 'block';
+        loadData();
+        loadTime(); // ✅ เพิ่มบรรทัดนี้
+    } else {
+        alert("รหัสผ่านไม่ถูกต้อง!");
+    }
+}
+
+        // 2. ดึงข้อมูลจาก Google Sheets
+        async function loadData() {
+    const tbody = document.getElementById('adminTableBody');
+    tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
+    
+    try {
+        const response = await fetch(SCRIPT_URL + "?action=read");
+        allData = await response.json();
+        console.log("แถวที่ 0:", allData[0]);
+        console.log("แถวที่ 1:", allData[1]);
+        renderTable(allData);
+    } catch (err) {
+        tbody.innerHTML = "<tr><td colspan='7'>เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>";
+    }
+
+    // ✅ โหลดใหม่อัตโนมัติทุก 30 วินาที
+    setTimeout(loadData, 30000);
+}
+
+        // 3. แสดงผลตาราง
+        function renderTable(data) {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = "";
+            
+            // ข้ามแถวแรกที่เป็น Header ของ Excel (ถ้ามี)
+            data.slice(1).forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+    <td>${row[0]}</td>
+    <td>${row[1]}</td>
+    <td>${row[2]}</td>
+    <td>${row[3]}</td>
+    <td>${row[4]}</td>
+    <td class="club-cell">${row[5]}</td>
+    <td><button class="btn-del" onclick="deleteData('${row[2]}')">ลบ</button></td>
+`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 4. ระบบค้นหา (Search)
+        function searchTable() {
+            const input = document.getElementById("adminSearch").value.toLowerCase();
+            const rows = document.getElementById("adminTableBody").getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            }
+        }
+
+        // 5. แยกดู ม.ต้น / ม.ปลาย
+        function filterByLevel(level) {
+            let filtered = [];
+            if (level === 'all') {
+                filtered = allData;
+            } else {
+                filtered = allData.filter((row, index) => {
+                    if(index === 0) return true;
+                    const grade = parseInt(row[3].split('/')[0]); // แยกเลขห้อง เช่น 1/2 -> 1
+                    return level === 'junior' ? grade <= 3 : grade >= 4;
+                });
+            }
+            renderTable(filtered);
+        }
+
+        // 6. Export เป็น Excel
+function exportExcel() {
+    const exportData = allData.slice(1).map(row => ({
+        "ว/ด/ป เวลา":   row[0],
+        "ชื่อ-นามสกุล": row[1],
+        "เลขประจำตัว":  String(row[2]).replace("'", ""),
+        "ห้อง":         String(row[3]).replace("'", ""),
+        "เลขที่":        row[4],
+        "ชุมนุม":        row[5]
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
+    XLSX.writeFile(wb, "รายงานการลงทะเบียนชุมนุม_2569.xlsx");
+}
+
+        // ✅ โหลดเวลาเปิด-ปิดเมื่อ Login
+async function loadTime() {
+    const res = await fetch(SCRIPT_URL + "?action=getTime");
+    const data = await res.json();
+    if (data.juniorOpen)  document.getElementById('juniorOpen').value  = data.juniorOpen;
+    if (data.juniorClose) document.getElementById('juniorClose').value = data.juniorClose;
+    if (data.seniorOpen)  document.getElementById('seniorOpen').value  = data.seniorOpen;
+    if (data.seniorClose) document.getElementById('seniorClose').value = data.seniorClose;
+}
+
+async function saveTime() {
+    const juniorOpen  = document.getElementById('juniorOpen').value;
+    const juniorClose = document.getElementById('juniorClose').value;
+    const seniorOpen  = document.getElementById('seniorOpen').value;
+    const seniorClose = document.getElementById('seniorClose').value;
+    if (!juniorOpen || !juniorClose || !seniorOpen || !seniorClose) {
+        alert("กรุณากรอกเวลาให้ครบทั้ง ม.ต้น และ ม.ปลาย");
+        return;
+    }
+    await fetch(`${SCRIPT_URL}?action=setTime&juniorOpen=${encodeURIComponent(juniorOpen)}&juniorClose=${encodeURIComponent(juniorClose)}&seniorOpen=${encodeURIComponent(seniorOpen)}&seniorClose=${encodeURIComponent(seniorClose)}`);
+    document.getElementById('timeStatus').innerText = "✅ บันทึกแล้ว!";
+    setTimeout(() => document.getElementById('timeStatus').innerText = "", 3000);
+}
+
+// 7. ฟังก์ชันลบข้อมูล (เรียกผ่าน Apps Script)
+async function deleteData(studentId) {
+            if (confirm(`ยืนยันการลบข้อมูลเลขประจำตัว ${studentId}?`)) {
+                // ส่งคำขอไปที่ Apps Script ให้ลบแถวที่มี Student ID นี้
+                alert("กำลังส่งคำขอสถบข้อมูล...");
+                // ในขั้นตอนนี้ต้องอัปเดต Apps Script ให้รองรับ action=delete ด้วย
+            }
+        }
+    </script>
+
+    <style>
+        /* CSS เฉพาะส่วน Admin */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f4f4; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { width: 300px; text-align: center; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        #adminSearch { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .table-wrapper { overflow-x: auto; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        th { background-color: var(--br-red); color: white; }
+        .club-cell { font-weight: bold; color: var(--br-red); }
+        .btn-export { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        .btn-del { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .btn-sub { padding: 8px 15px; border: 1px solid var(--br-red); background: white; color: var(--br-red); border-radius: 5px; cursor: pointer; }
+        .btn-sub.active { background: var(--br-red); color: white; }
+    </style>
+</body>
+</html>

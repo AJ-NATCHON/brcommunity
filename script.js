@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDg5yXdOGIfgk9KN3oCncp-mzIk7yPllvbKRHPYRS2-cs2aa0hhk2Ifzgb7TrLPOiQHA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIEF0K4z7d9i1YnCVqTpXoaA_chCOBCS3SPIdM1sTz1afydtgfGmjY8a2jz9oKpUQc/exec";
 
 const clubsJunior = [
     "คณิตศาสตร์เจ้าปัญหา (ครูลลิต/ครูมัญชุสร)", "The Power of Math (ครูกฤติยา)", "เกมคณิตฯ(อุปกรณ์) (ครูศาศวัต/ครูจันทร์จิรา)", "Math Art (ครูทฤฒมน)", "ชุมนุมสวดโอ้เอ้วิหารราย ม.ต้น (ครูยุวดี)", "ชุมนุมหนังสือทำมือ ม.ต้น (ครูภควรรษ)", "English Literature (ครูหทัยภัทร)", "Crossword ม.ต้น (ครูคณิน)", "Enjoy with You(tube) (ครูมินิมล)", "Chinese Music ม.ต้น (ครูจิรพร)", "Free style by science (ครูธนวิน)", "บอร์ดเกม/ROV (ครูวาณี)", "e-sport (ครูณัชชนม์/ครูศุภารัตน์)", "ชุมนุมส่งเสริมประชาธิปไตย ม.ต้น (ครูอาชวิน)", "ชมรมเปตอง (ครูธนภูมิ/ครูภัทรรัตน์)", "ชุมนุมเสน่ห์ปลายจวัก (ครูสลิลดา)", "ชุมนุมการ์ตูนแฟนด้อม (ครูจิตตราภรณ์/ครูธันยวีร์)", "ชุมนุมอัพเวลธรรม (ครูคุณานนท์)", "ฟังพอดแคสต์ (Podcast) (ครูโสรยา)", "Photography as Art (ครูวิวัฒน์)", "ชุมนุมโลกศิลปะหลากมิติ (ครูกฤษฎา)", "เฮฮา ภาษาดนตรี (ครูรุ่งโรจน์)", "นาฏศิลป์ ม.ต้น (ครูเอกชัย)", "กีฬาสากล ม.ต้น (ครูพิฑูร)", "ชุมนุมกีฬาบริดจ์ (ครูผดุงศักดิ์)", "ว่ายน้ำ (ครูวารินทร์)"
@@ -8,16 +8,36 @@ const clubsSenior = [
     "A - Level คณิตศาสตร์ (ครูนพกร)", "เกมคณิตฯ(อุปกรณ์) (ครูกรรณิกา/ครูนันทวัน)", "เกมคณิิตคิดไปเรื่อย (ครูนันทวัลย์/ครูธัชณวีย์)", "คณิตศาสตร์กับการลงทุน (ครูรุ่งโรจน์)", "ชุมนุม Drama & Film (ครูพิมพลอย/ครูธิติพงศ์)", "ชุมนุมมูเตลู (ครูณฐพรรณ/ครูนารท)", "ชุมนุมสวดโอ้เอ้วิหารราย ม.ปลาย (ครูสว่างจิต)", "ชุมนุมนักอ่านนิยาย Why (ครูลินดา)", "Creative French (ครูกานต์ชนก/ครูวรพล)", "Crossword (ครูธนิสร)", "Chinese Music ม.ปลาย (ครูลลิตา/ครูวิภาวี)", "เล่น เล่น เล่นในญี่ปุ่น (ครูพิมพ์พรรณ/ครูวิทยา)", "Japanese Home Cooking (ครูดารากันย์/ครูนิตยา)", "Let's vibe with Eng! (ครูอรวรรณ)", "ตะลุยคอม@พร้อมแข่ง (ครูเพชรรัตน์/ครูนพพร)", "e-sport (ครูสุทธิพงศ์)", "นักรีวิว(เวอร์) - B.R. Reviewer (ครูมะลิวัลย์/ครูสุพัตรา)", "สรรสร้างมิตรภาพด้วยบอร์ดเกม (ครูมัฆวัตว์/ครูพรพงศ์)", "ชุมนุม SMTE (ครูมินตรา)", "ชมรมเปตอง (ครูธนภูมิ/ครูภัทรรัตน์)", "ชุมนุมส่งเสริมประชาธิปไตย ม.ปลาย (ครูศิริรัตน์)", "ชุมนุมหนังเปิดโลก (ว่าที่ ร.ต.ปรเมธ/ครูจงกลกร)", "ชุมนุม 'เล่น' ให้เป็นคน (ครูธนพล/ครูตรัยรัตน์)", "ชุมนุมอัพเวลธรรม (ครูฉัตรมงคล)", "ชุมนุมชิงช้าสวรรค์ (ครูไพรัตน์)", "B.R. Beauty Club (ครูปาริชาติ/ครูณิชชภา)", "ดนตรีไทย (ครูสุริยพงษ์)", "การ์ตูนคุณน่ะทำ (ครูจุฑามาศ)", "นาฏศิลป์ ม.ปลาย (ครูทรงยศ)", "ชุมนุมกีฬาบริดจ์ (ครูผดุงศักดิ์)", "ชุมนุมกีฬาสากล ม.ปลาย (ครูธวัชชัย)", "ชุมนุมแนะแนว (ครูวัสสิกา)", "ชุมนุมลองเล่า (ครูจุฑารัตน์)"
 ];
 
-function handleLogin() {
+async function handleLogin() {
     const email = document.getElementById('login-email').value;
-    const id = document.getElementById('login-id').value;
-    if (email.endsWith('@br.ac.th') && id.length > 0) {
-        document.getElementById('email').value = email;
-        document.getElementById('studentId').value = id;
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('registration-section').style.display = 'block';
-    } else {
+    const id    = document.getElementById('login-id').value;
+
+    if (!email.endsWith('@br.ac.th') || id.length === 0) {
         alert("กรุณาใช้อีเมล @br.ac.th และกรอกเลขประจำตัว");
+        return;
+    }
+
+    const btn = document.querySelector('#login-section .btn-main');
+    btn.disabled = true;
+    btn.innerText = "กำลังตรวจสอบ...";
+
+    try {
+        const res = await fetch(`${SCRIPT_URL}?action=verify&email=${encodeURIComponent(email)}&studentId=${encodeURIComponent(id)}`);
+        const result = await res.json();
+
+        if (result.status === "ok") {
+            document.getElementById('email').value = email;
+            document.getElementById('studentId').value = id;
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('registration-section').style.display = 'block';
+        } else {
+            alert("❌ อีเมลหรือเลขประจำตัวไม่ถูกต้อง");
+        }
+    } catch (err) {
+        alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "เข้าสู่ระบบ";
     }
 }
 

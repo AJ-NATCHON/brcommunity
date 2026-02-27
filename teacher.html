@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้าครูที่ปรึกษาชุมนุม | เบญจมราชาลัย</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="admin-page">
+
+    <!-- หน้า Login ครู -->
+    <div id="teacher-login" class="overlay">
+        <div class="card login-card">
+            <h2>ครูที่ปรึกษาชุมนุม</h2>
+            <p style="color:#666; font-size:14px; margin-bottom:15px;">โรงเรียนเบญจมราชาลัย</p>
+            <input type="email" id="teacher-email" placeholder="อีเมลครู (@br.ac.th)">
+            <input type="password" id="teacher-password" placeholder="รหัสผ่าน" style="margin-top:10px;">
+            <button onclick="checkTeacherLogin()" class="btn-main" style="margin-top:10px;">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <!-- หน้าแสดงข้อมูลชุมนุม -->
+    <div id="teacher-content" class="container" style="display:none; max-width: 1200px;">
+        <header style="position:relative;">
+            <h1>ข้อมูลนักเรียนชุมนุม</h1>
+            <p id="teacher-info" style="color:#666;"></p>
+            <button onclick="logoutTeacher()" style="position:absolute; top:10px; right:0; padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
+        </header>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <span id="club-name-display" style="font-size:18px; font-weight:bold; color:var(--br-red);"></span>
+                    <span id="student-count" style="margin-left:15px; color:#666;"></span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="teacherSearch" onkeyup="searchTable()" placeholder="ค้นหานักเรียน..." style="padding:8px; border:1px solid #ddd; border-radius:5px;">
+                    <button onclick="exportExcel()" class="btn-export">📥 Export Excel</button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ว/ด/ป</th>
+                            <th>เวลา</th>
+                            <th>อีเมล</th>
+                            <th>เลขประจำตัว</th>
+                            <th>เลขที่</th>
+                            <th>ห้อง</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>ชุมนุม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacherTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIEF0K4z7d9i1YnCVqTpXoaA_chCOBCS3SPIdM1sTz1afydtgfGmjY8a2jz9oKpUQc/exec";
+        let clubData = [];
+        let teacherName = "";
+        let clubName = "";
+
+        // 1. Login ครู
+        async function checkTeacherLogin() {
+            const email    = document.getElementById('teacher-email').value;
+            const password = document.getElementById('teacher-password').value;
+
+            if (!email || !password) {
+                alert("กรุณากรอกอีเมลและรหัสผ่าน");
+                return;
+            }
+
+            const btn = document.querySelector('#teacher-login .btn-main');
+            btn.disabled = true;
+            btn.innerText = "กำลังตรวจสอบ...";
+
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=verifyTeacher&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+                const result = await res.json();
+
+                if (result.status === "ok") {
+                    teacherName = result.teacherName;
+                    clubName    = result.club;
+
+                    sessionStorage.setItem('teacherLoggedIn', 'true');
+                    sessionStorage.setItem('teacherName', teacherName);
+                    sessionStorage.setItem('clubName', clubName);
+
+                    showTeacherContent();
+                } else {
+                    alert("❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+                }
+            } catch (err) {
+                alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "เข้าสู่ระบบ";
+            }
+        }
+
+        // 2. แสดงหน้าครู
+        function showTeacherContent() {
+            document.getElementById('teacher-login').style.display = 'none';
+            document.getElementById('teacher-content').style.display = 'block';
+            document.getElementById('teacher-info').innerText = `ครู${teacherName}`;
+            document.getElementById('club-name-display').innerText = `📋 ${clubName}`;
+            loadClubData();
+        }
+
+        // 3. โหลดข้อมูลนักเรียนในชุมนุม
+        async function loadClubData() {
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = "<tr><td colspan='8'>กำลังโหลดข้อมูล...</td></tr>";
+
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=readByClub&club=${encodeURIComponent(clubName)}`);
+                clubData = await res.json();
+                renderTable(clubData);
+                document.getElementById('student-count').innerText = `จำนวน ${clubData.length} คน`;
+            } catch (err) {
+                tbody.innerHTML = "<tr><td colspan='8'>เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>";
+            }
+        }
+
+        // 4. แสดงตาราง
+        function renderTable(data) {
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = "";
+            if (data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>ยังไม่มีนักเรียนลงทะเบียน</td></tr>";
+                return;
+            }
+            data.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                    <td class="club-cell">${row[7]}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 5. ค้นหา
+        function searchTable() {
+            const input = document.getElementById("teacherSearch").value.toLowerCase();
+            const rows = document.getElementById("teacherTableBody").getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            }
+        }
+
+        // 6. Export Excel
+        function exportExcel() {
+            if (clubData.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับ Export");
+                return;
+            }
+            const exportData = clubData.map(row => ({
+                "ว/ด/ป":         row[0],
+                "เวลา":          row[1],
+                "อีเมล":         row[2],
+                "เลขประจำตัว":  String(row[3]).replace("'", ""),
+                "เลขที่":        row[4],
+                "ห้อง":         String(row[5]).replace("'", ""),
+                "ชื่อ-นามสกุล": row[6],
+                "ชุมนุม":        row[7]
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
+            XLSX.writeFile(wb, `รายชื่อ_${clubName}.xlsx`);
+        }
+
+        // 7. ออกจากระบบ
+        function logoutTeacher() {
+            sessionStorage.removeItem('teacherLoggedIn');
+            sessionStorage.removeItem('teacherName');
+            sessionStorage.removeItem('clubName');
+            document.getElementById('teacher-content').style.display = 'none';
+            document.getElementById('teacher-login').style.display = 'flex';
+            document.getElementById('teacher-email').value = '';
+            document.getElementById('teacher-password').value = '';
+        }
+
+        // 8. เช็คสถานะ Login เมื่อโหลดหน้า
+        window.onload = function() {
+            if (sessionStorage.getItem('teacherLoggedIn') === 'true') {
+                teacherName = sessionStorage.getItem('teacherName');
+                clubName    = sessionStorage.getItem('clubName');
+                showTeacherContent();
+            }
+        }
+    </script>
+
+    <style>
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f4f4; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { width: 320px; text-align: center; }
+        .login-card input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .table-wrapper { overflow-x: auto; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        th { background-color: var(--br-red); color: white; }
+        .club-cell { font-weight: bold; color: var(--br-red); }
+        .btn-export { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
+    </style>
+</body>
+</html>

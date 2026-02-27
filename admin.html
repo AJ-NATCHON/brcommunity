@@ -60,16 +60,16 @@
                 <table id="registrationTable">
                     <thead>
                         <tr>
-    <th>ว/ด/ป</th>
-    <th>เวลา</th>
-    <th>อีเมล</th>
-    <th>เลขประจำตัว</th>
-    <th>เลขที่</th>
-    <th>ห้อง</th>
-    <th>ชื่อ-นามสกุล</th>
-    <th>ชุมนุม</th>
-    <th>จัดการ</th>
-</tr>
+                            <th>ว/ด/ป</th>
+                            <th>เวลา</th>
+                            <th>อีเมล</th>
+                            <th>เลขประจำตัว</th>
+                            <th>เลขที่</th>
+                            <th>ห้อง</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>ชุมนุม</th>
+                            <th>จัดการ</th>
+                        </tr>
                     </thead>
                     <tbody id="adminTableBody"></tbody>
                 </table>
@@ -78,13 +78,14 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDg5yXdOGIfgk9KN3oCncp-mzIk7yPllvbKRHPYRS2-cs2aa0hhk2Ifzgb7TrLPOiQHA/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIEF0K4z7d9i1YnCVqTpXoaA_chCOBCS3SPIdM1sTz1afydtgfGmjY8a2jz9oKpUQc/exec";
         let allData = [];
 
         // 1. ระบบเช็ครหัสผ่าน
         function checkAdminLogin() {
             const pass = document.getElementById('admin-password').value;
             if (pass === "12345") {
+                sessionStorage.setItem('adminLoggedIn', 'true');
                 document.getElementById('admin-login').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
                 loadData();
@@ -103,9 +104,8 @@
                 allData = await response.json();
                 renderTable(allData);
             } catch (err) {
-                tbody.innerHTML = "<tr><td colspan='7'>เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='9'>เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>";
             }
-            
         }
 
         // 3. แสดงผลตาราง
@@ -115,16 +115,16 @@
             data.slice(1).forEach((row) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-    <td>${row[0]}</td>
-    <td>${row[1]}</td>
-    <td>${row[2]}</td>
-    <td>${row[3]}</td>
-    <td>${row[4]}</td>
-    <td>${row[5]}</td>
-    <td>${row[6]}</td>
-    <td class="club-cell">${row[7]}</td>
-    <td><button class="btn-del" onclick="deleteData('${row[3]}')">ลบ</button></td>
-`;
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                    <td class="club-cell">${row[7]}</td>
+                    <td><button class="btn-del" onclick="deleteData('${row[3]}')">ลบ</button></td>
+                `;
                 tbody.appendChild(tr);
             });
         }
@@ -155,21 +155,21 @@
 
         // 6. Export เป็น Excel
         function exportExcel() {
-    const exportData = allData.slice(1).map(row => ({
-        "ว/ด/ป":         row[0],
-        "เวลา":          row[1],
-        "อีเมล":         row[2],
-        "เลขประจำตัว":  String(row[3]).replace("'", ""),
-        "เลขที่":        row[4],
-        "ห้อง":         String(row[5]).replace("'", ""),
-        "ชื่อ-นามสกุล": row[6],
-        "ชุมนุม":        row[7]
-    }));
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
-    XLSX.writeFile(wb, "รายงานการลงทะเบียนชุมนุม_2569.xlsx");
-}
+            const exportData = allData.slice(1).map(row => ({
+                "ว/ด/ป":         row[0],
+                "เวลา":          row[1],
+                "อีเมล":         row[2],
+                "เลขประจำตัว":  String(row[3]).replace("'", ""),
+                "เลขที่":        row[4],
+                "ห้อง":         String(row[5]).replace("'", ""),
+                "ชื่อ-นามสกุล": row[6],
+                "ชุมนุม":        row[7]
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
+            XLSX.writeFile(wb, "รายงานการลงทะเบียนชุมนุม_2569.xlsx");
+        }
 
         // 7. โหลดเวลาเปิด-ปิด
         async function loadTime() {
@@ -216,9 +216,20 @@
 
         // 10. ออกจากระบบ
         function logout() {
+            sessionStorage.removeItem('adminLoggedIn');
             document.getElementById('admin-content').style.display = 'none';
             document.getElementById('admin-login').style.display = 'flex';
             document.getElementById('admin-password').value = '';
+        }
+
+        // 11. เช็คสถานะ Login เมื่อโหลดหน้า
+        window.onload = function() {
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadData();
+                loadTime();
+            }
         }
     </script>
 

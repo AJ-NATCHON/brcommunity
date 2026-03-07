@@ -3,217 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หน้าครูที่ปรึกษาชุมนุม | เบญจมราชาลัย</title>
+    <title>ระบบครูที่ปรึกษา | เบญจมราชาลัย</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
-<body class="admin-page">
-
-    <!-- หน้า Login ครู -->
-    <div id="teacher-login" class="overlay">
-        <div class="card login-card">
-            <h2>ครูที่ปรึกษาชุมนุม</h2>
-            <p style="color:#666; font-size:14px; margin-bottom:15px;">โรงเรียนเบญจมราชาลัย</p>
-            <input type="email" id="teacher-email" placeholder="อีเมลครู (@br.ac.th)">
-            <input type="password" id="teacher-password" placeholder="รหัสผ่าน" style="margin-top:10px;">
-            <button onclick="checkTeacherLogin()" class="btn-main" style="margin-top:10px;">เข้าสู่ระบบ</button>
-        </div>
-    </div>
-
-    <!-- หน้าแสดงข้อมูลชุมนุม -->
-    <div id="teacher-content" class="container" style="display:none; max-width: 1200px;">
-        <header style="position:relative;">
-            <h1>ข้อมูลนักเรียนชุมนุม</h1>
-            <p id="teacher-info" style="color:#666;"></p>
-            <button onclick="logoutTeacher()" style="position:absolute; top:10px; right:0; padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
+<body>
+    <div class="container">
+        <header>
+            <h1>ระบบครูที่ปรึกษาชุมนุม</h1>
+            <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชูปถัมภ์</p>
         </header>
 
-        <div class="card">
+        <!-- LOGIN SECTION -->
+        <section id="teacher-login" class="card">
+            <h2>👩‍🏫 เข้าสู่ระบบครูที่ปรึกษา</h2>
+            <div class="input-group">
+                <input type="password" id="teacher-password" placeholder="รหัสผ่าน" required>
+                <button onclick="handleTeacherLogin()" class="btn-main">เข้าสู่ระบบ</button>
+            </div>
+            <div id="login-error" style="color:red; text-align:center; margin-top:10px; display:none;"></div>
+            <div style="text-align:center; margin-top:15px;">
+                <a href="index.html" style="display:inline-block; padding:8px 16px; background:#6c757d; color:white; border-radius:5px; text-decoration:none; font-size:14px;">← กลับหน้าหลัก</a>
+            </div>
+        </section>
+
+        <!-- STUDENT LIST SECTION -->
+        <section id="teacher-dashboard" class="card" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                 <div>
-                    <span id="club-name-display" style="font-size:18px; font-weight:bold; color:var(--br-red);"></span>
-                    <span id="student-count" style="margin-left:15px; color:#666;"></span>
+                    <h2 style="margin:0;" id="teacher-greeting">สวัสดี</h2>
+                    <p style="margin:5px 0 0 0; color:#666;" id="club-name-display"></p>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="teacherSearch" onkeyup="searchTable()" placeholder="ค้นหานักเรียน..." style="padding:8px; border:1px solid #ddd; border-radius:5px;">
-                    <button onclick="exportExcel()" class="btn-export">📥 Export Excel</button>
+                <button onclick="logoutTeacher()" style="padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer;">🚪 ออกจากระบบ</button>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <span id="student-count" style="font-weight:bold; color:#007bff;"></span>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="loadStudents()" id="refresh-btn" style="padding:8px 16px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer;">🔄 รีเฟรช</button>
+                    <button onclick="exportExcel()" style="padding:8px 16px; background:#217346; color:white; border:none; border-radius:5px; cursor:pointer;">📥 Export Excel</button>
                 </div>
             </div>
 
-            <div class="table-wrapper">
-                <table>
+            <div style="overflow-x:auto;">
+                <table id="student-table" style="width:100%; border-collapse:collapse; font-size:14px;">
                     <thead>
-                        <tr>
-                            <th>ว/ด/ป</th>
-                            <th>เวลา</th>
-                            <th>อีเมล</th>
-                            <th>เลขประจำตัว</th>
-                            <th>เลขที่</th>
-                            <th>ห้อง</th>
-                            <th>ชื่อ-นามสกุล</th>
-                            <th>ชุมนุม</th>
+                        <tr style="background:#007bff; color:white;">
+                            <th style="padding:10px; border:1px solid #ddd;">ลำดับ</th>
+                            <th style="padding:10px; border:1px solid #ddd;">ชื่อ-นามสกุล</th>
+                            <th style="padding:10px; border:1px solid #ddd;">เลขประจำตัว</th>
+                            <th style="padding:10px; border:1px solid #ddd;">ระดับ</th>
+                            <th style="padding:10px; border:1px solid #ddd;">ห้อง</th>
+                            <th style="padding:10px; border:1px solid #ddd;">เลขที่</th>
+                            <th style="padding:10px; border:1px solid #ddd;">เวลาลงทะเบียน</th>
                         </tr>
                     </thead>
-                    <tbody id="teacherTableBody"></tbody>
+                    <tbody id="student-tbody">
+                        <tr><td colspan="7" style="text-align:center; padding:20px;">กำลังโหลด...</td></tr>
+                    </tbody>
                 </table>
             </div>
-        </div>
+        </section>
     </div>
 
     <script>
+        // ==================== Firebase ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_tIAHA7tWS_21w-_J7GHxLA_eDxC7qX8",
+            authDomain: "benjama-club-45bf3.firebaseapp.com",
+            databaseURL: "https://benjama-club-45bf3-default-rtdb.firebaseio.com",
+            projectId: "benjama-club-45bf3",
+            storageBucket: "benjama-club-45bf3.firebasestorage.app",
+            messagingSenderId: "257453794303",
+            appId: "1:257453794303:web:8a80688dce863cbfb17dca"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIEF0K4z7d9i1YnCVqTpXoaA_chCOBCS3SPIdM1sTz1afydtgfGmjY8a2jz9oKpUQc/exec";
-        let clubData = [];
-        let teacherName = "";
-        let clubName = "";
+        const FETCH_TIMEOUT_MS = 15000;
 
-        // 1. Login ครู
-        async function checkTeacherLogin() {
-            const email    = document.getElementById('teacher-email').value;
-            const password = document.getElementById('teacher-password').value;
+        let currentClub = "";
+        let currentTeacherName = "";
+        let studentsData = [];
 
-            if (!email || !password) {
-                alert("กรุณากรอกอีเมลและรหัสผ่าน");
-                return;
+        // ==================== helper ====================
+        async function fetchWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return res;
+            } catch (err) {
+                clearTimeout(timer);
+                if (err.name === 'AbortError') throw new Error('TIMEOUT');
+                throw err;
             }
+        }
+
+        function showLoginError(msg) {
+            const el = document.getElementById('login-error');
+            el.innerText = msg;
+            el.style.display = 'block';
+        }
+        function hideLoginError() {
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        function getLevel(classroom) {
+            const grade = parseInt(String(classroom || '').replace("'", "").split('/')[0]);
+            return grade <= 3 ? 'ม.ต้น' : 'ม.ปลาย';
+        }
+
+        // ==================== LOGIN (verify ผ่าน Apps Script เหมือนเดิม) ====================
+        async function handleTeacherLogin() {
+            const password = document.getElementById('teacher-password').value.trim();
+            hideLoginError();
+            if (!password) { showLoginError("❌ กรุณากรอกรหัสผ่าน"); return; }
 
             const btn = document.querySelector('#teacher-login .btn-main');
             btn.disabled = true;
-            btn.innerText = "กำลังตรวจสอบ...";
+            btn.innerText = "⏳ กำลังตรวจสอบ...";
 
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=verifyTeacher&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+                const res = await fetchWithTimeout(
+                    `${SCRIPT_URL}?action=verifyTeacher&password=${encodeURIComponent(password)}`
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const result = await res.json();
 
                 if (result.status === "ok") {
-                    teacherName = result.teacherName;
-                    clubName    = result.club;
-
-                    sessionStorage.setItem('teacherLoggedIn', 'true');
-                    sessionStorage.setItem('teacherName', teacherName);
-                    sessionStorage.setItem('clubName', clubName);
-
-                    showTeacherContent();
+                    currentTeacherName = result.teacherName;
+                    currentClub = result.club;
+                    document.getElementById('teacher-login').style.display = 'none';
+                    document.getElementById('teacher-dashboard').style.display = 'block';
+                    document.getElementById('teacher-greeting').innerText = `สวัสดี ${currentTeacherName}`;
+                    document.getElementById('club-name-display').innerText = `ชุมนุม: ${currentClub}`;
+                    loadStudents();
                 } else {
-                    alert("❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+                    showLoginError("❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่");
+                    document.getElementById('teacher-password').value = '';
+                    document.getElementById('teacher-password').focus();
                 }
             } catch (err) {
-                alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+                if (err.message === 'TIMEOUT') {
+                    showLoginError("⏱️ ระบบตอบสนองช้าเกินไป กรุณาลองใหม่");
+                } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                    showLoginError("🌐 ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้");
+                } else {
+                    showLoginError("⚠️ เกิดข้อผิดพลาด: " + err.message);
+                }
             } finally {
                 btn.disabled = false;
                 btn.innerText = "เข้าสู่ระบบ";
             }
         }
 
-        // 2. แสดงหน้าครู
-        function showTeacherContent() {
-            document.getElementById('teacher-login').style.display = 'none';
-            document.getElementById('teacher-content').style.display = 'block';
-            document.getElementById('teacher-info').innerText = `ครู${teacherName}`;
-            document.getElementById('club-name-display').innerText = `📋 ${clubName}`;
-            loadClubData();
-        }
-
-        // 3. โหลดข้อมูลนักเรียนในชุมนุม
-        async function loadClubData() {
-            const tbody = document.getElementById('teacherTableBody');
-            tbody.innerHTML = "<tr><td colspan='8'>กำลังโหลดข้อมูล...</td></tr>";
+        // ==================== โหลดรายชื่อจาก Firebase ====================
+        async function loadStudents() {
+            const tbody = document.getElementById('student-tbody');
+            const refreshBtn = document.getElementById('refresh-btn');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">⏳ กำลังโหลด...</td></tr>';
+            refreshBtn.disabled = true;
+            refreshBtn.innerText = "⏳ กำลังโหลด...";
 
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=readByClub&club=${encodeURIComponent(clubName)}`);
-                clubData = await res.json();
-                renderTable(clubData);
-                document.getElementById('student-count').innerText = `จำนวน ${clubData.length} คน`;
+                const snap = await db.ref('registrations').get();
+
+                if (!snap.exists()) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">ยังไม่มีนักเรียนลงทะเบียน</td></tr>';
+                    document.getElementById('student-count').innerText = 'จำนวนนักเรียน: 0 คน';
+                    studentsData = [];
+                    return;
+                }
+
+                // กรองเฉพาะชุมนุมของครูคนนี้
+                const all = Object.values(snap.val());
+                const myClub = String(currentClub).trim();
+                const filtered = all.filter(row => {
+                    const rowClub = String(row.club || '').trim();
+                    return rowClub === myClub
+                        || rowClub.includes(myClub)
+                        || myClub.includes(rowClub);
+                });
+
+                studentsData = filtered;
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">ยังไม่มีนักเรียนลงทะเบียนในชุมนุมนี้</td></tr>';
+                    document.getElementById('student-count').innerText = 'จำนวนนักเรียน: 0 คน';
+                    return;
+                }
+
+                document.getElementById('student-count').innerText = `จำนวนนักเรียน: ${filtered.length} คน`;
+
+                // เรียงตามห้อง → เลขที่
+                filtered.sort((a, b) => {
+                    const ca = String(a.classroom || '');
+                    const cb = String(b.classroom || '');
+                    if (ca !== cb) return ca.localeCompare(cb);
+                    return parseInt(a.no || 0) - parseInt(b.no || 0);
+                });
+
+                tbody.innerHTML = filtered.map((row, i) => {
+                    const level = getLevel(row.classroom);
+                    return `
+                        <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'};">
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${i + 1}</td>
+                            <td style="padding:8px; border:1px solid #ddd;">${row.name || ''}</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${row.studentId || ''}</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${level}</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${row.classroom || ''}</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${row.no || ''}</td>
+                            <td style="padding:8px; border:1px solid #ddd; text-align:center;">${row.timestamp || ''}</td>
+                        </tr>
+                    `;
+                }).join('');
+
             } catch (err) {
-                tbody.innerHTML = "<tr><td colspan='8'>เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>";
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:red;">⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerText = "🔄 รีเฟรช";
             }
         }
 
-        // 4. แสดงตาราง
-        function renderTable(data) {
-            const tbody = document.getElementById('teacherTableBody');
-            tbody.innerHTML = "";
-            if (data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>ยังไม่มีนักเรียนลงทะเบียน</td></tr>";
-                return;
-            }
-            data.forEach((row) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td class="club-cell">${row[7]}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // 5. ค้นหา
-        function searchTable() {
-            const input = document.getElementById("teacherSearch").value.toLowerCase();
-            const rows = document.getElementById("teacherTableBody").getElementsByTagName("tr");
-            for (let row of rows) {
-                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
-            }
-        }
-
-        // 6. Export Excel
+        // ==================== Export Excel ====================
         function exportExcel() {
-            if (clubData.length === 0) {
+            if (studentsData.length === 0) {
                 alert("ไม่มีข้อมูลสำหรับ Export");
                 return;
             }
-            const exportData = clubData.map(row => ({
-                "ว/ด/ป":         row[0],
-                "เวลา":          row[1],
-                "อีเมล":         row[2],
-                "เลขประจำตัว":  String(row[3]).replace("'", ""),
-                "เลขที่":        row[4],
-                "ห้อง":         String(row[5]).replace("'", ""),
-                "ชื่อ-นามสกุล": row[6],
-                "ชุมนุม":        row[7]
-            }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
+
+            const sorted = [...studentsData].sort((a, b) => {
+                const ca = String(a.classroom || '');
+                const cb = String(b.classroom || '');
+                if (ca !== cb) return ca.localeCompare(cb);
+                return parseInt(a.no || 0) - parseInt(b.no || 0);
+            });
+
+            const excelData = [
+                ["ชุมนุม: " + currentClub],
+                [],
+                ["ลำดับ", "ชื่อ-นามสกุล", "เลขประจำตัว", "ระดับ", "ห้อง", "เลขที่", "เวลาลงทะเบียน"]
+            ];
+
+            sorted.forEach((row, i) => {
+                excelData.push([
+                    i + 1,
+                    row.name || '',
+                    row.studentId || '',
+                    getLevel(row.classroom),
+                    row.classroom || '',
+                    row.no || '',
+                    row.timestamp || ''
+                ]);
+            });
+
             const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            ws['!cols'] = [
+                { wch: 8 }, { wch: 30 }, { wch: 15 },
+                { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 22 }
+            ];
             XLSX.utils.book_append_sheet(wb, ws, "รายชื่อนักเรียน");
-            XLSX.writeFile(wb, `รายชื่อ_${clubName}.xlsx`);
+            const fileName = `ชุมนุม_${currentClub.split('(')[0].trim()}_${new Date().toLocaleDateString('th-TH')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
-        // 7. ออกจากระบบ
+        // ==================== Logout ====================
         function logoutTeacher() {
-            sessionStorage.removeItem('teacherLoggedIn');
-            sessionStorage.removeItem('teacherName');
-            sessionStorage.removeItem('clubName');
-            document.getElementById('teacher-content').style.display = 'none';
-            document.getElementById('teacher-login').style.display = 'flex';
-            document.getElementById('teacher-email').value = '';
+            currentClub = "";
+            currentTeacherName = "";
+            studentsData = [];
             document.getElementById('teacher-password').value = '';
+            document.getElementById('teacher-dashboard').style.display = 'none';
+            document.getElementById('teacher-login').style.display = 'block';
+            hideLoginError();
         }
 
-        // 8. เช็คสถานะ Login เมื่อโหลดหน้า
-        window.onload = function() {
-            if (sessionStorage.getItem('teacherLoggedIn') === 'true') {
-                teacherName = sessionStorage.getItem('teacherName');
-                clubName    = sessionStorage.getItem('clubName');
-                showTeacherContent();
-            }
-        }
+        // ==================== Enter key ====================
+        document.getElementById('teacher-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleTeacherLogin();
+        });
     </script>
-
-    <style>
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f4f4; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .login-card { width: 320px; text-align: center; }
-        .login-card input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .table-wrapper { overflow-x: auto; background: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
-        th { background-color: var(--br-red); color: white; }
-        .club-cell { font-weight: bold; color: var(--br-red); }
-        .btn-export { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
-    </style>
 </body>
 </html>

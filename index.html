@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงทะเบียนชุมนุม 2569 | เบญจมราชาลัย</title>
+    <title>ระบบลงทะเบียนชุมนุม | เบญจมราชาลัย</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>ระบบลงทะเบียนชุมนุม ปีการศึกษา 2569</h1>
+            <h1>ระบบลงทะเบียนชุมนุม</h1>
             <p>โรงเรียนเบญจมราชาลัย ในพระบรมราชูปถัมภ์</p>
         </header>
 
@@ -35,7 +35,7 @@
                 <button id="btn-senior" onclick="selectLevel('senior')" class="btn-level">มัธยมศึกษาตอนปลาย</button>
             </div>
 
-            <form id="enroll-form" style="display:none;" onsubmit="handleSubmit(event)">
+            <form id="enroll-form" onsubmit="handleSubmit(event)" style="display:none;">
                 <div class="form-grid">
                     <input type="text" id="name" placeholder="ชื่อ-นามสกุล" required>
                     <input type="text" id="studentId" placeholder="เลขประจำตัว" readonly>
@@ -46,11 +46,15 @@
                         <option value="">-- กรุณาเลือกชุมนุม --</option>
                     </select>
                 </div>
-                <button type="submit" id="submit-btn" class="btn-main">ยืนยันการลงทะเบียน</button>
+                <button type="button" onclick="handleSubmit(event)" id="submit-btn" class="btn-main">ยืนยันการลงทะเบียน</button>
             </form>
         </section>
     </div>
 
+    <!-- ✅ โหลด Firebase ผ่าน CDN compat (ไม่ต้องใช้ import/module) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <!-- ✅ โหลด script.js แบบปกติ (ไม่ใช้ type="module") -->
     <script src="script.js"></script>
 </body>
 </html>
